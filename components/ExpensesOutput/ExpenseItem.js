@@ -7,7 +7,7 @@ function ExpenseItem({id, description, amount, date}){
     const navigation = useNavigation()
 
     function expensePressHandler(){
-        navigation.navigate('ManageExpense', {expenseID: id})
+        navigation.navigate('ManageExpense', {expenseId: id})
     }
 
     return (
