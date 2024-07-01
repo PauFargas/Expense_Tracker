@@ -1,7 +1,13 @@
 import { View, Text, StyleSheet } from "react-native"
 import { GlobalStyles } from '../../constants/styles'
 
-function ExpensesSummary({expenses, periodName}){
+function ExpensesSummary({expenses = [], periodName}){
+
+    if (!Array.isArray(expenses)){
+        console.error("ExpensesSummary: 'expenses no es un array");
+        return null
+    }
+
     const expensesSum = expenses.reduce((sum, expense) => {
         return sum + expense.amount
     }, 0)
