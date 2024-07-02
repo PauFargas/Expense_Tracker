@@ -7,7 +7,7 @@ function AllExpenses() {
 
     console.log('All Expenses:', expensesCtx.expenses);
 
-    return <ExpensesOutput expenses={expensesCtx.expenses} expensesPeriod="Total" />;
+    return <ExpensesOutput expenses={expensesCtx.expenses} expensesPeriod="Total" fallbackText="No hi ha despeses realitzades" />;
 }
 
 export default AllExpenses;
