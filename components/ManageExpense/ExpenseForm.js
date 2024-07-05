@@ -1,39 +1,123 @@
-import { View, StyleSheet, Text } from "react-native"
-import Input from "./Input"
+import { useState } from "react";
+import { View, StyleSheet, Text, Alert } from "react-native"
+import Input from "./Input";
+import Button from "../UI/Button";
+import { getFormattedDate } from "../../util/date";
+import { GlobalStyles } from "../../constants/styles";
 
-function ExpenseForm(){
-    function amountChangedHandler(){}
+
+function ExpenseForm({ onCancel, onSubmit, submitButtonLabel, defaultValues }) {
+    const [inputs, setInputs] = useState({
+        amount: {
+            value: defaultValues ? defaultValues.amount.toString() : '', 
+            isValid: true,
+        },
+        date: {
+            value: defaultValues ? getFormattedDate(defaultValues.date) : '',
+            isValid: true,
+        },
+        description: {
+            value: defaultValues ? defaultValues.description : '', 
+            isValid: true,
+        },
+    });
+
+    function inputChangedHandler(inputIdentifier, enteredValue) {
+        setInputs((curInputs) => {
+            return {
+                ...curInputs,
+                [inputIdentifier]: { value: enteredValue, isValid: true }
+            };
+        });
+    };
+
+    function submitHandler() {
+        const expenseData = {
+            amount: +inputs.amount.value,
+            date: parseDate(inputs.date.value),
+            description: inputs.description.value
+        };
+
+        const amountIsValid = !isNaN(expenseData.amount) && expenseData.amount > 0;
+        const dateIsValid = expenseData.date.toString() !== 'Invalid Date';
+        const descriptionIsValid = expenseData.description.trim().length > 0;
+
+        if (!amountIsValid || !dateIsValid || !descriptionIsValid) {
+            // Ensenyar feedback
+            Alert.alert('Input no vàlid', 'Per favor, comprova les dades');
+            setInputs((curInputs) => {
+                return {
+                    amount: { value: curInputs.amount.value, isValid: amountIsValid },
+                    date: { value: curInputs.date.value, isValid: dateIsValid },
+                    description: { value: curInputs.description.value, isValid: descriptionIsValid }
+                };
+            });
+            return;
+        }
+
+        onSubmit(expenseData);
+    }
+
+    const formIsInvalid = 
+        !inputs.amount.isValid || 
+        !inputs.date.isValid || 
+        !inputs.description.isValid;
+
     return (
-    <View style={styles.formStyle}>
-        <Text style={styles.title}>Les teves despeses</Text>
-        <View style={styles.inputsRow}>
+        <View style={styles.formStyle}>
+            <Text style={styles.title}>Les teves despeses</Text>
+            <View style={styles.inputsRow}>
+                <Input 
+                    style={styles.rowInput}
+                    invalid={!inputs.amount.isValid}
+                    label='Quantitat'
+                    textInputConfig={{
+                        keyboardType: 'decimal-pad',
+                        onChangeText: inputChangedHandler.bind(this, 'amount'),
+                        value: inputs.amount.value,
+                    }}
+                />
+                <Input
+                    invalid={!inputs.date.isValid}
+                    style={styles.rowInput}
+                    label='Data'
+                    textInputConfig={{
+                        placeholder: 'DD/MM/AAAA',
+                        maxLength: 10,
+                        onChangeText: inputChangedHandler.bind(this, 'date'),
+                        value: inputs.date.value,
+                    }}
+                />
+            </View>
             <Input 
-            style={styles.rowInput}
-            label='Quantitat' textInputConfig={{
-                keyboardType: 'decimal-pad',
-                onChangeText: amountChangedHandler,
-            }} />
-            <Input 
-            style={styles.rowInput}
-            label='Data' textInputConfig={{
-                placeholder: 'DD/MM/AAAA',
-                maxLength: 10,
-                onChangeText: () =>{}
-            }} />
+                label='Descripció' 
+                invalid={!inputs.description.isValid}
+                textInputConfig={{
+                    multiline: true,
+                    //autoCorrect : false si vulguessim
+                    //autoCapitalize : 'characters' 'words' 'sentences (default)'
+                    onChangeText: inputChangedHandler.bind(this, 'description'),
+                    value: inputs.description.value,
+                }} 
+            />
+            {formIsInvalid && <Text style={styles.errorText}>Input no vàlid. Per favor, comprova les dades.</Text>}
+            <View style={styles.buttons}>
+                <Button style={styles.button} mode='flat' onPress={onCancel}>Cancel·lar</Button>
+                <Button style={styles.button} onPress={submitHandler}>{submitButtonLabel}</Button>
+            </View>
         </View>
-        <Input label='Descripció' textInputConfig={{
-            multiline: true,
-            //autoCorrect : false si vulguessim
-            //autoCapitalize : 'characters' 'words' 'sentences (default)'
-        }} />
-    </View>
-    )
+    );
 }
 
-export default ExpenseForm
+function parseDate(dateString) {
+    const [day, month, year] = dateString.split('/').map(part => parseInt(part, 10));
+    return new Date(year, month - 1, day);
+}
+
+export default ExpenseForm;
 
 const styles = StyleSheet.create({
-    formStyle:{
+    formStyle: {
         marginTop: 40,
     },
     title: {
@@ -41,13 +125,27 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: 'white',
         marginVertical: 24,
-        textAlign: 'center'
+        textAlign: 'center',
     },
-    inputsRow:{
+    inputsRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
     },
-    rowInput:{
-        flex: 1
-    }
-})
+    rowInput: {
+        flex: 1,
+    },
+    buttons: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    button: {
+        minWidth: 120,
+        marginHorizontal: 8,
+    },
+    errorText: {
+        textAlign: 'center',
+        color: GlobalStyles.colors.error500,
+        margin: 8,
+    },
+});
